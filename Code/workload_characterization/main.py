@@ -6,7 +6,10 @@ import glob
 from fa import FA
 from cluster import KMeansClusters, DetK
 from sklearn.model_selection import train_test_split
-
+def writeCSV(file_name,data):
+    pd_data = pd.DataFrame(data)
+    pd_data.to_csv(file_name,sep='\t')
+    
 def workload_characterization():
     '''path = r'/Users/rachananarayanacharya/MLbasedDBMStuning/Data/'  # use your path
     all_files = glob.glob(path + "/*.csv")
@@ -17,7 +20,9 @@ def workload_characterization():
 
     df = pd.concat(li, axis=0, ignore_index=True)
     train_df, test_df = train_test_split(df, test_size=0.2)'''
-    train_df=pd.read_csv("../PreProcessing/PreProcessedData/Online_workloadB_preprocessed.csv")
+
+    train_df=pd.read_csv("../../Data/WorkloadFiles/workload_10.pkl")
+    #train_df=pd.read_csv("../../Data/CSVFiles/Online_workloadB_preprocessed.csv")
     train_df=train_df.fillna(0)
     model = FA()
 
@@ -38,7 +43,10 @@ def workload_characterization():
     
     det.fit(components, kmeans_models.cluster_map_)
     print("Optimal no of clusters:",det.optimal_num_clusters_)
-    
+    pruned_metrics = kmeans_models.cluster_map_[det.optimal_num_clusters_].get_closest_samples()
+    print("pruned metrics:",pruned_metrics)
+    writeCSV("pruned_metric.csv",pruned_metrics)
+
 workload_characterization()
 
 

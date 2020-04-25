@@ -101,6 +101,22 @@ class KMeans():
             }
         return self
 
+    def get_closest_samples(self):
+        """Returns a list of the labels of the samples that are located closest
+           to their cluster's center.
+        Returns
+        ----------
+        closest_samples : list
+                  A list of the sample labels that are located the closest to
+                  their cluster's center.
+        """
+        if self.sample_distances_ is None:
+            raise Exception("No model has been fit yet!")
+
+        return [samples['sample_labels'][0] for samples in list(self.sample_distances_.values())]
+
+
+
 
 class KMeansClusters():
 
