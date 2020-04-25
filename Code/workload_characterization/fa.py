@@ -16,7 +16,7 @@ class FA():
 
     def _fit(self, X, n_components, sample_size):
         self._reset()
-        X = np.delete(X, range(0,13), axis=1) #delete column numbers:1 included - 13 excluded, the knob columns are deleted
+        X = np.delete(X, range(0,14), axis=1) #delete column numbers:1 included - 13 excluded, the knob columns are deleted
         np.random.shuffle(X) #Shuffled only by the rows, by default
         X=X[:sample_size,:]#sample only 1000 rows from the matrix
         print("Shape before:", X.shape)
