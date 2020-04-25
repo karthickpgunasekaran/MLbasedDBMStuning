@@ -63,10 +63,10 @@ class KMeans():
         # Compute Kmeans model
         self.model_.fit(X)
         if sample_labels is None:
-            print("INSIDE")
+            #print("INSIDE")
             sample_labels = ["sample_{}".format(i) for i in range(X.shape[0])]
 
-        print("sample labels:",len(sample_labels)," ",X.shape[0])
+        print("sample labels:",len(sample_labels)," ",X.shape)
         assert len(sample_labels) == X.shape[0]
 
         self.sample_labels_ = np.array(sample_labels)
