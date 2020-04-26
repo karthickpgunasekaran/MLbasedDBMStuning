@@ -75,6 +75,7 @@ def returnFilesInDir(path):
 def loadWorkLoadRemCols(cols_li):
     files = returnFilesInDir("../../Data/WorkloadFiles/")
     #print("FIles:",files)
+    final_df = pd.DataFrame()
     for f in files:
          train_df=pd.read_pickle(f)
          #print(train_df)
@@ -84,7 +85,9 @@ def loadWorkLoadRemCols(cols_li):
          name = spl[len(spl)-1].split(".")[0]
          df.to_excel("../../Data/PrunedWorkloadFiles/"+name+".xlsx", index=False)
          df.to_pickle("../../Data/PrunedWorkloadFiles/"+name+".pkl")
-
+         final_df = final_df.append(df)
+    final_df.to_pickle("../../Data/ConcatPrunedFile.pkl")
+    final_df.to_csv("../../Data/ConcatPrunedFile.csv")
 workload_characterization()
 
 
