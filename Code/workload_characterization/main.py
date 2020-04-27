@@ -37,9 +37,9 @@ def workload_characterization():
 
     #train_df=pd.read_pickle("../../Data/WorkloadFiles/workload_11.pkl",compression=None)
     train_df3=pd.read_csv("../../Data/CSVFiles/Online_workloadB_preprocessed.csv")
-    train_df1=pd.read_csv("../../Data/CSVFiles/Online_workloadC_preprocessed.csv")
+    #train_df1=pd.read_csv("../../Data/CSVFiles/Online_workloadC_preprocessed.csv")
     train_df2=pd.read_csv("../../Data/CSVFiles/Offline_workload_preprocessed.csv")
-    frames = [train_df1, train_df2, train_df3]
+    frames = [train_df2, train_df3]
 
     train_df = pd.concat(frames)
 
@@ -49,7 +49,7 @@ def workload_characterization():
     X=train_df.to_numpy()
     print("Shape of the data:",X.shape)
     n_rows, n_cols = X.shape
-    model=model._fit(X, 100, 19000)
+    model=model._fit(X, 50, 10000)
 
     components = model.components_.T.copy()
     print("After Components: ",components.shape)
@@ -62,10 +62,7 @@ def workload_characterization():
     det.fit(components, clustering_model.cluster_map_)
     print("Optimal no of clusters:",det.optimal_num_clusters_)
     #print(clustering_model.cluster_map_)
-    optimal_cluster_size=det.optimal_num_clusters_
-    if(len(clustering_model.cluster_map_)>9):
-        optimal_cluster_size=9
-    pruned_metrics = clustering_model.cluster_map_[optimal_cluster_size].get_closest_samples()
+    pruned_metrics = clustering_model.cluster_map_[det.optimal_num_clusters_].get_closest_samples()
     print("pruned metrics:",pruned_metrics)
     idx_set = columnsToPrune(pruned_metrics)
     cols_rem = []
