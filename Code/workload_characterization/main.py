@@ -7,6 +7,10 @@ import os
 from fa import FA
 from cluster import KMeansClusters, DetK
 from sklearn.model_selection import train_test_split
+
+from Code.workload_characterization.em_cluster import EMClusters, Silhouette
+
+
 def writeCSV(file_name,data):
     pd_data = pd.DataFrame(data)
     pd_data.to_csv(file_name,sep='\t')
@@ -16,6 +20,10 @@ def columnsToPrune(arr_li):
         val_id = int(vals.split("_")[1])
         idx_li.append(val_id+13)
     return set(idx_li)
+
+
+
+
 def workload_characterization():
     '''path = r'/Users/rachananarayanacharya/MLbasedDBMStuning/Data/'  # use your path
     all_files = glob.glob(path + "/*.csv")
@@ -41,29 +49,52 @@ def workload_characterization():
     X=train_df.to_numpy()
     print("Shape of the data:",X.shape)
     n_rows, n_cols = X.shape
-    model=model._fit(X, 70, 10000)
+    model=model._fit(X, 100, 19000)
 
     components = model.components_.T.copy()
     print("After Components: ",components.shape)
-    kmeans_models = KMeansClusters()
-    kmeans_models.fit(components, min_cluster=1,
+    c_algo="kmeans" # kmeans or em
+    clustering_model, det=select_clustering_model(c_algo)
+    clustering_model.fit(components, min_cluster=1,
                       max_cluster=min(n_cols - 1, 20),
                       estimator_params={'n_init': 50})
     
-    # Compute optimal # clusters, k, using gap statistics
-    det = DetK()#create_kselection_model("gap-statistic")
-    
-    det.fit(components, kmeans_models.cluster_map_)
+    det.fit(components, clustering_model.cluster_map_)
     print("Optimal no of clusters:",det.optimal_num_clusters_)
-    pruned_metrics = kmeans_models.cluster_map_[9].get_closest_samples()
+    #print(clustering_model.cluster_map_)
+    optimal_cluster_size=det.optimal_num_clusters_
+    if(len(clustering_model.cluster_map_)>9):
+        optimal_cluster_size=9
+    pruned_metrics = clustering_model.cluster_map_[optimal_cluster_size].get_closest_samples()
     print("pruned metrics:",pruned_metrics)
     idx_set = columnsToPrune(pruned_metrics)
     cols_rem = []
     for i in range(14,373):
         if i not in idx_set:
             cols_rem.append(i)
+    print(len(idx_set))
+    print_pruned_metrics(idx_set, train_df, c_algo)
     loadWorkLoadRemCols(cols_rem)
-    #writeCSV("pruned_metric.csv",pruned_metrics)
+    writeCSV("pruned_metric.csv",pruned_metrics)
+
+def select_clustering_model(param):
+    if param=="kmeans":
+        model= KMeansClusters()
+        det=DetK()
+    else:
+        model=EMClusters()
+        det=Silhouette()
+    return model, det
+
+    pass
+
+def print_pruned_metrics(idx_set, train_df, algo):
+    cols=train_df.columns.tolist()
+    pruned_metrics=""
+    for i in idx_set:
+        pruned_metrics+=",      "+cols[i]
+    print(algo, " final pruned metrics: ", pruned_metrics)
+
 def returnFilesInDir(path):
     files = []
     # r=root, d=directories, f = files
