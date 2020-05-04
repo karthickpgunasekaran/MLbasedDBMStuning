@@ -7,15 +7,35 @@ import pandas as pd
 import sklearn
 from sklearn.preprocessing import StandardScaler
 
+
+model_dict = {}
+total_models = 0
 def loadWorkloadFileNames(folder):
     onlyfiles = [f for f in listdir(folder) if isfile(join(folder, f))]
     return onlyfiles
 
+def gprModel(workloadId,colId,X_workload,y_col,X_target):
+    global total_models
+    if workloadId in model_dict and colId in model_dict[workloadId]:
+         print("Loading the model.............")
+         model = model_dict[workloadId][colId]
+         gpr_result = model.predict(X_target)
+         return gpr_result 
+    model = GPRNP()
+    total_models= total_models+1
+    #print(total_models)
+    # print(X_scaled)
+    model.fit(X_workload, y_col, ridge=1.0)
+    model_dict[workloadId][colId] = model
+    gpr_result = model.predict(X_target)    
+    return gpr_result
+
 def WorkloadMapping():
+    global total_models
     #Get TargetCSV (WorkloadMapping_C)
-    target_path=r"C:\\Umass spring 20\\645\\github\\MLbasedDBMStuning\\Data\\"
+    target_path=r"../../Data/Augmented_Pruned_target.csv"
     #Reading and Scaling Target files
-    target_df=pd.read_csv(target_path+'Target.csv')
+    target_df=pd.read_csv(target_path)
     workload=target_df.columns[0]
     X_columnlabels=target_df.columns[1:13]
     Y_columnlabels=target_df.columns[13:]
@@ -29,7 +49,7 @@ def WorkloadMapping():
     error = []
     workload_data = {}
     scores = {}
-    pruned_file = r"C:\\Umass spring 20\\645\\github\\MLbasedDBMStuning\\Data\\WorkloadFiles\\Pruned_unscaled\\"
+    pruned_file = r"../../Data/PrunedWorkloadFiles/"
     # find all the files in workload
     files = loadWorkloadFileNames(pruned_file)
 
@@ -66,10 +86,10 @@ def WorkloadMapping():
                         #  print(y_col.shape,X_workload.shape)
                         y_col = y_col.reshape(-1, 1)
 
-                        model = GPRNP()
+                        #model = GPRNP()
                         # print(X_scaled)
-                        model.fit(X_workload, y_col, ridge=1.0)
-                        gpr_result = model.predict(X_target)
+                        #model.fit(X_workload, y_col, ridge=1.0)
+                        gpr_result = gprModel(workload_id,j,X_workload,y_col,X_target)
                         predictions[:, j] = gpr_result.ypreds.ravel()
                     except:
                         error.append(workload_id)
@@ -78,7 +98,8 @@ def WorkloadMapping():
             # and each of the known workloads
             dists = np.sqrt(np.sum(np.square(np.subtract(predictions, y_target)), axis=1))
             scores[workload_id] = np.mean(dists)
-            print("score is:", scores)
+            #print("score is:", scores)
+            print("Total models:",total_models)
 
     # Find the best (minimum) score
     best_score = np.inf
