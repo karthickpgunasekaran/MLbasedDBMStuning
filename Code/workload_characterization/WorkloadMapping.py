@@ -15,7 +15,7 @@ def loadWorkloadFileNames(folder):
     return onlyfiles
 
 def gprModel(workloadId,colId,X_workload,y_col,X_target):
-    global total_models
+    global total_models,model_dict
     if workloadId in model_dict and colId in model_dict[workloadId]:
          print("Loading the model.............")
          model = model_dict[workloadId][colId]
@@ -29,6 +29,13 @@ def gprModel(workloadId,colId,X_workload,y_col,X_target):
     model_dict[workloadId][colId] = model
     gpr_result = model.predict(X_target)    
     return gpr_result
+
+def mean_absolute_percentage_error(y_true, y_pred): 
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+def mean_squared_error(Y_true,Y_pred):
+    return np.square(np.subtract(Y_true,Y_pred)).mean() 
 
 def WorkloadMapping():
     global total_models
@@ -112,7 +119,25 @@ def WorkloadMapping():
             best_workload_id = workload_id
     print(best_score, best_workload_id)
 
-WorkloadMapping()
-
+def latencyPrediction(mapping):
+    target_path=r"../../Data/Augmented_Pruned_target.csv"
+    #Reading and Scaling Target files
+    target_df=pd.read_csv(target_path)
+    workload=target_df.columns[0]
+    X_columnlabels=target_df.columns[1:13]
+    Y_columnlabels=target_df.columns[13:14] #get latency column only
+    workload_id_list = np.array(target_df[X_columnlabels])
+    X_target = np.array(target_df[X_columnlabels])
+    y_target = np.array(target_df[Y_columnlabels])
+    predictions = np.zeros(len(X_target))
+    for i in range(0,len(X_target)):
+         workload_id =workload_id_list[i] #np.unique(np.array(workload_mtrx[workload]))[0]
+         closest_workload = mapping[workload_id]
+         predictions[i] = gprModel(closest_workload,0,None,None,X_target[i])
+    mape = mean_absolute_percentage_error(y_target,predictions)
+    mse = mean_squared_error(y_target,predictions)
+    print("MAPE:",mape,"  MSE:",mse)
+file_workload_map =WorkloadMapping()
+latencyPrediction(file_workload_map)
 
 
