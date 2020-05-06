@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial.distance import cdist as ed
 from scipy import special
+from sklearn.base import BaseEstimator, RegressorMixin
 #from analysis.gp_tf import GPRResult
 
 class GPRResult(object):
@@ -10,7 +11,7 @@ class GPRResult(object):
         self.sigmas = sigmas
 
 # numpy version of Gaussian Process Regression, not using Tensorflow
-class GPRNP(object):
+class GPRNP(BaseEstimator, RegressorMixin):
 
     def __init__(self, length_scale=1.0, magnitude=1.4, max_train_size=7000,
                  batch_size=3000, check_numerics=True, debug=False):
