@@ -19,6 +19,15 @@ target_data={}
 error = []
 scores = {}
 
+
+def mean_absolute_percentage_error(y_true, y_pred): 
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+def mean_squared_error(Y_true,Y_pred):
+    return np.square(np.subtract(Y_true,Y_pred)).mean() 
+
+
 def loadWorkloadFileNames(folder):
     onlyfiles = [f for f in listdir(folder) if isfile(join(folder, f))]
     return onlyfiles
@@ -26,8 +35,10 @@ def loadWorkloadFileNames(folder):
 def gprModel(workloadId,colId,X_workload,y_col,X_target):
     global total_models
     if workloadId in model_dict and colId in model_dict[workloadId]:
-        print("Loading the model.............")
+        #print("Workload: ",workloadId," col id: ",colId)
+        #print("Loading the model.............: ",X_target.shape)
         model = model_dict[workloadId][colId]
+        
         gpr_result = model.predict(X_target)
         return gpr_result
     model = GPRNP()
@@ -54,14 +65,17 @@ def MakeMatrix():
     targetfiles=loadWorkloadFileNames(target_path)
 
     for targetworkload in targetfiles:
-        if targetworkload.endswith(".pkl"):
+        if targetworkload.endswith(".pkl") and "5_" in  targetworkload:
+            #print("File name:",targetworkload)
             target_mtrx = pd.read_pickle(target_path + targetworkload)
             target_workload = target_mtrx.columns[0]
             t_cols_list = list(target_mtrx.columns)
             X_matrix = target_mtrx[t_cols_list[1:13]].to_numpy()
             y_matrix = target_mtrx[t_cols_list[13:]].to_numpy()
             unique_target_workload = np.unique(np.array(target_mtrx[target_workload]))[0]
+
             X_scaler.fit(X_matrix)
+
             y_scaler.fit_transform(y_matrix)
             target_data[unique_target_workload] = {
                 'X_matrix': X_matrix,
@@ -70,6 +84,7 @@ def MakeMatrix():
 
     for filename in files:
         if filename.endswith(".pkl"):
+		    #print("FIlename:",filename)
                     workload_mtrx = pd.read_pickle(offline_path + filename)
                     workload = workload_mtrx.columns[0]
                     cols_list = list(workload_mtrx.columns)
@@ -88,20 +103,24 @@ def MakeMatrix():
 def FindEuclideanDistance():
 
     for target_workload_id, target_workload_entry in list(target_data.items()):
+        #print("NEW TARGET:",target_workload_id)
         X_target=target_workload_entry['X_matrix']
         y_target = target_workload_entry['y_matrix']
         distances={}
         for workload_id, workload_entry in list(workload_data.items()):
+                #print("Started new workload matching:",workload_id)
                 predictions = np.empty_like(y_target)
                 X_workload = workload_entry['X_matrix']
                 y_workload = workload_entry['y_matrix']
                 for j, y_col in enumerate(y_workload.T):
                    #Predict for each metrics
                                 y_col = y_col.reshape(-1, 1)
+                                #X_target = X_target.reshape(-1, 1)
                                 '''
                                 model = GPRNP()
                                 model= model.fit(X_workload,y_col)
                                 gpr_result=model.predict(X_target)
+                                print("X target normal:",X_target.shape)
                                 '''
                                 gpr_result= gprModel(int(workload_id),int(j),X_workload,y_col,X_target)
                                 predictions[:, j] = gpr_result.ypreds.ravel()
@@ -116,7 +135,6 @@ def FindEuclideanDistance():
 def find_best_scores(scores):
     scores_info={}
     for target_workload_id, dist_score in list(scores.items()):
-        print()
         best_target_score = np.inf
         best_workload_id = None
         for source_workload_id,distance in list(dist_score.items()):
@@ -171,10 +189,13 @@ def latencyPrediction(mapping):
 
     for i in range(0,len(X_target)):
          workload_id =int(workload_id_list[i]) #np.unique(np.array(workload_mtrx[workload]))[0]
-         print("Workload id:",workload_id)  
+         #print("Workload id:",workload_id)  
          closest_workload = mapping[workload_id]
-         predictions[i] = gprModel(closest_workload,0,None,None,X_target[i])
-
+         gpr_res = gprModel(closest_workload,0,None,None,X_target[i].reshape(-1, 1).T)
+         predictions[i] = gpr_res.ypreds.ravel()
+         print("ravel:",gpr_res.ypreds.ravel())
+    print("y preds: ",predictions)
+    print("target:",y_target)
     mape = mean_absolute_percentage_error(y_target,predictions)
     mse = mean_squared_error(y_target,predictions)
     print("MAPE:",mape,"  MSE:",mse)
@@ -182,8 +203,9 @@ def latencyPrediction(mapping):
 
 MakeMatrix()
 distances=FindEuclideanDistance()
+print("Done with Euclidean distance ")
 best_scores=find_best_scores(distances)
 AugmentWorkload(best_scores)
 #mapping={101:57} should be of this format
-latencyPrediction(mapping)
+latencyPrediction(best_scores)
 
