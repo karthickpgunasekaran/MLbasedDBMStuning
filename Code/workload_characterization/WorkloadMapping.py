@@ -63,7 +63,27 @@ def MakeMatrix():
     # find all the files in workload
     files = loadWorkloadFileNames(offline_path)
     targetfiles=loadWorkloadFileNames(target_path)
-
+    '''
+    for filename in files:
+        if filename.endswith(".pkl"):
+            workload_mtrx = pd.read_pickle(offline_path + filename)
+            workload = workload_mtrx.columns[0]
+            cols_list = list(workload_mtrx.columns)
+            X_matrix = workload_mtrx[cols_list[1:13]].to_numpy()
+            y_matrix = workload_mtrx[cols_list[13:]].to_numpy()
+            X_scaler.fit(X_matrix)
+            #y_scaler.fit(y_matrix)
+    
+    for targetworkload in targetfiles:
+        if targetworkload.endswith(".pkl") and "5_" in  targetworkload:
+            target_mtrx = pd.read_pickle(target_path + targetworkload)
+            target_workload = target_mtrx.columns[0]
+            t_cols_list = list(target_mtrx.columns)
+            X_matrix = target_mtrx[t_cols_list[1:13]].to_numpy()
+            y_matrix = target_mtrx[t_cols_list[13:]].to_numpy()
+            X_scaler.fit(X_matrix)
+            #y_scaler.fit(y_matrix)
+    '''
     for targetworkload in targetfiles:
         if targetworkload.endswith(".pkl") and "5_" in  targetworkload:
             #print("File name:",targetworkload)
@@ -74,9 +94,9 @@ def MakeMatrix():
             y_matrix = target_mtrx[t_cols_list[13:]].to_numpy()
             unique_target_workload = np.unique(np.array(target_mtrx[target_workload]))[0]
 
-            X_scaler.fit(X_matrix)
+            X_scaler.fit_transform(X_matrix)
 
-            y_scaler.fit_transform(y_matrix)
+            #y_scaler.transform(y_matrix)
             target_data[unique_target_workload] = {
                 'X_matrix': X_matrix,
                 'y_matrix': y_matrix,
@@ -91,14 +111,14 @@ def MakeMatrix():
                     X_matrix = workload_mtrx[cols_list[1:13]].to_numpy()
                     y_matrix = workload_mtrx[cols_list[13:]].to_numpy()
                     unique_workload = np.unique(np.array(workload_mtrx[workload]))[0]
-                    X_scaler.fit(X_matrix)
-                    y_scaler.fit_transform(y_matrix)
+                    X_scaler.fit_transform(X_matrix)
+                    #y_scaler.transform(y_matrix)
                     workload_data[unique_workload] = {
                     'X_matrix': X_matrix,
                     'y_matrix': y_matrix,
                     }
 
-
+    return X_scaler,y_scaler
 
 def FindEuclideanDistance():
 
@@ -169,7 +189,7 @@ def AugmentWorkload(best_scores):
             X_df.to_pickle("Augmented"+str(target_workload_id)+".pkl")
     return
 
-def latencyPrediction(mapping):
+def latencyPrediction(mapping,X_scaler,y_scaler):
     target_path="../../Data/New_Workloads/Test_workloadB.pkl"
     #Reading and Scaling Target files
     if ".pkl" in target_path:
@@ -191,7 +211,9 @@ def latencyPrediction(mapping):
          workload_id =int(workload_id_list[i]) #np.unique(np.array(workload_mtrx[workload]))[0]
          #print("Workload id:",workload_id)  
          closest_workload = mapping[workload_id]
-         gpr_res = gprModel(closest_workload,0,None,None,X_target[i].reshape(-1, 1).T)
+         X_mat = X_target[i].reshape(-1, 1).T
+         X_scaler.transform(X_mat)
+         gpr_res = gprModel(closest_workload,0,None,None,X_mat)
          predictions[i] = gpr_res.ypreds.ravel()
          print("ravel:",gpr_res.ypreds.ravel())
     print("y preds: ",predictions)
@@ -201,11 +223,11 @@ def latencyPrediction(mapping):
     print("MAPE:",mape,"  MSE:",mse)
 
 
-MakeMatrix()
+X_scaler,y_scaler = MakeMatrix()
 distances=FindEuclideanDistance()
 print("Done with Euclidean distance ")
 best_scores=find_best_scores(distances)
 AugmentWorkload(best_scores)
 #mapping={101:57} should be of this format
-latencyPrediction(best_scores)
+latencyPrediction(best_scores,X_scaler,y_scaler)
 
