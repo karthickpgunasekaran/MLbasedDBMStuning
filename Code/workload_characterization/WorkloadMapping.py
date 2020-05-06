@@ -6,12 +6,13 @@ import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.preprocessing import StandardScaler
+from collections import defaultdict
 
 pruned=[ 'k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 's1',
        's2', 's3', 's4', 'latency', 'mimic_cpu_util',
        'driver.BlockManager.disk.diskSpaceUsed_MB.avg',
        'driver.jvm.non-heap.used.avg']
-model_dict = {}
+model_dict  = defaultdict(dict)
 total_models = 0
 workload_data = {}
 target_data={}
@@ -34,6 +35,7 @@ def gprModel(workloadId,colId,X_workload,y_col,X_target):
     # print(total_models)
     # print(X_scaled)
     model.fit(X_workload, y_col, ridge=1.0)
+    #print("workload id:",workloadId,"  col id:",colId)
     model_dict[workloadId][colId] = model
     gpr_result = model.predict(X_target)
     return gpr_result
@@ -45,8 +47,8 @@ def MakeMatrix():
     X_scaler = StandardScaler(copy=False)
     y_scaler = StandardScaler(copy=False)
 
-    offline_path = r"C:\\Umass spring 20\\645\\github\\MLbasedDBMStuning\\Data\\WorkloadFiles\\Pruned_unscaled\\offline\\"
-    target_path = r"C:\\Umass spring 20\\645\\github\\MLbasedDBMStuning\\Data\\WorkloadFiles\\Pruned_unscaled\\WorkloadC\\"
+    offline_path = "../../Data/New_Workloads/offline/"
+    target_path = "../../Data/New_Workloads/WorkloadB/divided/"
     # find all the files in workload
     files = loadWorkloadFileNames(offline_path)
     targetfiles=loadWorkloadFileNames(target_path)
@@ -96,10 +98,12 @@ def FindEuclideanDistance():
                 for j, y_col in enumerate(y_workload.T):
                    #Predict for each metrics
                                 y_col = y_col.reshape(-1, 1)
+                                '''
                                 model = GPRNP()
                                 model= model.fit(X_workload,y_col)
                                 gpr_result=model.predict(X_target)
-                                #gpr_result= gprModel(workload_id,j,X_workload,y_col,X_target)
+                                '''
+                                gpr_result= gprModel(int(workload_id),int(j),X_workload,y_col,X_target)
                                 predictions[:, j] = gpr_result.ypreds.ravel()
 
                 dists = np.mean(np.sqrt(np.sum(np.square(np.subtract(predictions, y_target)), axis=1)))
@@ -147,9 +151,39 @@ def AugmentWorkload(best_scores):
             X_df.to_pickle("Augmented"+str(target_workload_id)+".pkl")
     return
 
+def latencyPrediction(mapping):
+    target_path="../../Data/New_Workloads/Test_workloadB.pkl"
+    #Reading and Scaling Target files
+    if ".pkl" in target_path:
+         target_df=pd.read_pickle(target_path)
+    else:
+         target_df=pd.read_csv(target_path)
+    workload=target_df.columns[0]
+    X_columnlabels=target_df.columns[1:13]
+    Y_columnlabels=target_df.columns[13:14] #get latency column only
+
+    workload_id_list = np.array(target_df[workload])
+
+    X_target = np.array(target_df[X_columnlabels])
+    y_target = np.array(target_df[Y_columnlabels])
+
+    predictions = np.zeros(len(X_target))
+
+    for i in range(0,len(X_target)):
+         workload_id =int(workload_id_list[i]) #np.unique(np.array(workload_mtrx[workload]))[0]
+         print("Workload id:",workload_id)  
+         closest_workload = mapping[workload_id]
+         predictions[i] = gprModel(closest_workload,0,None,None,X_target[i])
+
+    mape = mean_absolute_percentage_error(y_target,predictions)
+    mse = mean_squared_error(y_target,predictions)
+    print("MAPE:",mape,"  MSE:",mse)
+
 
 MakeMatrix()
 distances=FindEuclideanDistance()
 best_scores=find_best_scores(distances)
 AugmentWorkload(best_scores)
+#mapping={101:57} should be of this format
+latencyPrediction(mapping)
 
