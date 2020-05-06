@@ -137,14 +137,14 @@ def AugmentWorkload(best_scores):
                     workload_data[source_workload_id]['X_matrix']=np.delete(workload_data[source_workload_id]['X_matrix'],j,axis=0)
                     workload_data[source_workload_id]['y_matrix'] = np.delete(workload_data[source_workload_id]['y_matrix'], j,axis=0)
 
-                    X_augmented[target_workload_id]=\
+            X_augmented[target_workload_id]=\
                     {'X_matrix': np.append(target_data[target_workload_id]['X_matrix'], workload_data[source_workload_id]["X_matrix"],axis=0),
                     'y_matrix':np.append(target_data[target_workload_id]['y_matrix'],workload_data[source_workload_id]["y_matrix"], axis=0)}
 
-                    X_df=pd.DataFrame(data= np.append(X_augmented[target_workload_id]['X_matrix'],X_augmented[target_workload_id]['y_matrix'],axis=1),columns=pruned)
+            X_df=pd.DataFrame(data= np.append(X_augmented[target_workload_id]['X_matrix'],X_augmented[target_workload_id]['y_matrix'],axis=1),columns=pruned)
                     # If augmented workload is created for any target workload- use that, otherwise use original target workload
                     #print(X_df.shape)
-                    X_df.to_pickle("Augmented"+str(target_workload_id)+".pkl")
+            X_df.to_pickle("Augmented"+str(target_workload_id)+".pkl")
     return
 
 
