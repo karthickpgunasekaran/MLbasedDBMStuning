@@ -11,4 +11,5 @@ The clustering algorithm can be switched to Kmeans/EM using the parameter `c_alg
 * Run `PreProcessing/WorkloadDivision&Pruning.ipynb` to divide the workload by workload Id and only keep pruned metrics.
 For WorkloadB, run `PreProcessing/WorkloadWiseDivision-WorkloadB.ipynb` as we need to create validation set from 6th row of WorkloadB along with division by workload and pruning.
 * Run `WorkloadMapping.py` to find nearest neighbours, map both workload to offline workload and latency prediction on workloadB.
+The model type can be switched to GPR/Neural/Random forest using the parameter `model_type`.
  If `plot_val=True` in latency prediction, it will also plot scatter plot for ground truth and predicted value.
