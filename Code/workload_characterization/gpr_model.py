@@ -74,7 +74,7 @@ class GPRNP(BaseEstimator, RegressorMixin):
             raise Exception("Input contains non-finite values: {}"
                             .format(X[~finite_els]))
 
-    def fit(self, X_train, y_train, ridge=1.0):
+    def fit(self, X_train, y_train, ridge=0.01):
         self._reset()
         X_train, y_train = self.check_X_y(X_train, y_train)
         if X_train.ndim != 2 or y_train.ndim != 2:
