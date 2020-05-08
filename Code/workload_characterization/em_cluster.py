@@ -11,7 +11,6 @@ import pandas as pd
 from scipy.spatial.distance import cdist
 import matplotlib.pyplot as plt
 from sklearn.mixture import GaussianMixture
-
 from scipy.stats import multivariate_normal as mvn
 
 
@@ -150,6 +149,16 @@ class EMClusters():
                 self.cluster_map_[K] = tmp
 
         return self
+    def plot_graphs(self, X):
+        n_components = np.arange(2, 21)
+        models = [GaussianMixture(n, covariance_type='full').fit(X)
+                  for n in n_components]
+        plt.plot(n_components, [m.bic(X) for m in models], label='BIC')
+        plt.legend(loc='Silhoutte score')
+        plt.xlabel('# clusters')
+        plt.ylabel('Silhoutte score')
+        plt.show()
+
 class Silhouette():
     """Det:
 
@@ -226,5 +235,6 @@ class Silhouette():
         self.scores_ = scores
         return self
 
+        # plt.plot(n_components, [m.bic(X) for m in models], label='BIC')
 
 

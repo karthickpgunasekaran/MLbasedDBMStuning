@@ -1,5 +1,6 @@
 from sklearn.decomposition import FactorAnalysis
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas
 import random
 
@@ -32,3 +33,12 @@ class FA():
         print("Shape after:",self.components_.shape)
 
         return self
+    def scree_plot(self, fa):
+        ev, v = fa.get_eigenvalues()
+        plt.scatter(range(1, df.shape[1] + 1), ev)
+        plt.plot(range(1, df.shape[1] + 1), ev)
+        plt.title('Scree Plot')
+        plt.xlabel('Factors')
+        plt.ylabel('Eigenvalue')
+        plt.grid()
+        plt.show()

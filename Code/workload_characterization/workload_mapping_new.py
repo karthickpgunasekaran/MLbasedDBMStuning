@@ -17,6 +17,8 @@ from sklearn.datasets import make_friedman2
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel,RBF
 
+from Code.workload_characterization.nn import NN
+
 pruned=[ 'k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 's1',
        's2', 's3', 's4', 'latency', 'mimic_cpu_util',
        'driver.BlockManager.disk.diskSpaceUsed_MB.avg',
@@ -49,7 +51,10 @@ def loadWorkloadFileNames(folder):
     onlyfiles = [f for f in listdir(folder) if isfile(join(folder, f))]
     return onlyfiles
 
-
+def get_prediction_model(model_type):
+    if(model_type=="gpr"):
+        return GPRNP(length_scale=1.0, magnitude=0.8)
+    return NN()
 
 def gprModel(workloadId,colId,X_workload,y_col,X_target):
     global total_models
@@ -60,13 +65,15 @@ def gprModel(workloadId,colId,X_workload,y_col,X_target):
         gpr_result = model.predict(X_target)
         return gpr_result
     #print("Creating the model.....")
-    model = GPRNP( length_scale=1.0, magnitude=0.8)
+    model_type="nn"
+    model = get_prediction_model(model_type)
     total_models = total_models + 1
     # print(total_models)
     # print(X_scaled)
-    model.fit(X_workload, y_col, ridge=0.01) # em - 0.01
+    model.fit(X_workload, y_col) # em - 0.01
     #print("workload id:",workloadId,"  col id:",colId)
     model_dict[workloadId][colId] = model
+    print("--------------------------Model: ", model)
     gpr_result = model.predict(X_target)
     return gpr_result
 
