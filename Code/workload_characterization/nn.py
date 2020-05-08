@@ -12,7 +12,7 @@ class NN():
 
     def build_regressor(self):
         regressor = Sequential()
-        regressor.add(Dense(units=12, input_dim=12))
+        regressor.add(Dense(units=50, input_dim=12))
         regressor.add(Dense(units=1))
         regressor.compile(optimizer='adam', loss='mean_absolute_percentage_error',
                           metrics=['mean_absolute_percentage_error'])

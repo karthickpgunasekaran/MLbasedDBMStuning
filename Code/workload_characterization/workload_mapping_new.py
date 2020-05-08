@@ -17,6 +17,7 @@ from sklearn.datasets import make_friedman2
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel,RBF
 
+from Code.workload_characterization.RF import RF
 from Code.workload_characterization.nn import NN
 
 pruned=[ 'k1', 'k2', 'k3', 'k4', 'k5', 'k6', 'k7', 'k8', 's1',
@@ -54,7 +55,12 @@ def loadWorkloadFileNames(folder):
 def get_prediction_model(model_type):
     if(model_type=="gpr"):
         return GPRNP(length_scale=1.0, magnitude=0.8)
-    return NN()
+    elif(model_type=="NN"):
+        return NN()
+    else:
+        return RF(50,200,2)
+
+
 
 def gprModel(workloadId,colId,X_workload,y_col,X_target):
     global total_models
